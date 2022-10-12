@@ -25,12 +25,12 @@ trait JsonResponseTrait
     /**
      *  Respond with an accepted response and associate a location and/or content if provided.
      *
-     * @param  array  $data
+     * @param  array|null  $data
      * @param  string  $message
      * @param  string  $location
      * @return JsonResponse|JsonResource
      */
-    public function accepted($data = [], string $message = '', string $location = '')
+    public function accepted($data = null, string $message = '', string $location = '')
     {
         $response = $this->success($data, $message, 202);
         if ($location) {
@@ -48,7 +48,7 @@ trait JsonResponseTrait
      * @param  string  $location
      * @return JsonResponse|JsonResource
      */
-    public function created($data = [], string $message = '', string $location = '')
+    public function created($data = null, string $message = '', string $location = '')
     {
         $response = $this->success($data, $message, 201);
         if ($location) {
@@ -66,7 +66,7 @@ trait JsonResponseTrait
      */
     public function noContent(string $message = '')
     {
-        return $this->success([], $message, 204);
+        return $this->success(null, $message, 204);
     }
 
     /**
@@ -80,7 +80,7 @@ trait JsonResponseTrait
      */
     public function ok(string $message = '', int $code = 200, array $headers = [], int $option = 0)
     {
-        return $this->success([], $message, $code, $headers, $option);
+        return $this->success(null, $message, $code, $headers, $option);
     }
 
     /**
@@ -195,7 +195,7 @@ trait JsonResponseTrait
      * @param  int  $option
      * @return JsonResponse|JsonResource
      */
-    public function success($data = [], string $message = '', int $code = 200, array $headers = [], int $option = 0)
+    public function success($data = null, string $message = '', int $code = 200, array $headers = [], int $option = 0)
     {
         if ($data instanceof ResourceCollection) {
             return $this->formatResourceCollectionResponse(...func_get_args());
@@ -213,92 +213,59 @@ trait JsonResponseTrait
             $data = $data->toArray();
         }
 
-        return $this->formatArrayResponse(Arr::wrap($data), $message, $code, $headers, $option);
+        return $this->formatArrayResponse($data, $message, $code, $headers, $option);
     }
 
     /**
      * Format normal array data.
      *
-     * @param  array|null  $data
+     * @param array|null $data
      * @param  string  $message
      * @param  int  $code
      * @param  array  $headers
      * @param  int  $option
      * @return JsonResponse
      */
-    protected function formatArrayResponse(array $data, string $message = '', int $code = 200, array $headers = [], int $option = 0): JsonResponse
+    protected function formatArrayResponse(?array $data, string $message = '', int $code = 200, array $headers = [], int $option = 0): JsonResponse
     {
         return $this->response($this->formatData($data, $message, $code), $code, $headers, $option);
     }
 
     /**
-     * Format response data fields.
-     *
-     * @param  array  $responseData
-     * @param  array  $dataFieldsConfig
-     * @return array
-     */
-    protected function formatDataFields(array $responseData, array $dataFieldsConfig = []): array
-    {
-        if (empty($dataFieldsConfig)) {
-            return $responseData;
-        }
-
-        foreach ($responseData as $field => $value) {
-            $fieldConfig = Arr::get($dataFieldsConfig, $field);
-            if (is_null($fieldConfig)) {
-                continue;
-            }
-
-            if ($value && is_array($value) && in_array($field, ['data', 'meta', 'pagination', 'links'])) {
-                $value = $this->formatDataFields($value, Arr::get($dataFieldsConfig, "{$field}.fields", []));
-            }
-
-            $alias = $fieldConfig['alias'] ?? $field;
-            $show = $fieldConfig['show'] ?? true;
-            $map = $fieldConfig['map'] ?? null;
-            unset($responseData[$field]);
-
-            if ($show) {
-                $responseData[$alias] = $map[$value] ?? $value;
-            }
-        }
-
-        return $responseData;
-    }
-
-    /**
      * Format return data structure.
      *
-     * @param  JsonResource|array|null  $data
+     * @param JsonResource|array|null $data
      * @param $message
      * @param $code
-     * @param  null  $errors
+     * @param null $errors
+     * @param null $additional
      * @return array
      */
-    protected function formatData($data, $message, &$code, $errors = null): array
+    protected function formatData($data, $message, &$code, $errors = null, $additional = null): array
     {
         $originalCode = $code;
-        $code = (int) substr($code, 0, 3); // notice
-        if ($code >= 400 && $code <= 499) {// client error
-            $status = 'error';
-        } elseif ($code >= 500 && $code <= 599) {// service error
-            $status = 'fail';
+        $code = (int) substr($code, 0, 3);
+        if (($code >= 400 && $code <= 499) || $code >= 500 && $code <= 599) {
+            $status = false;
         } else {
-            $status = 'success';
+            $status = true;
         }
 
         if (! $message && class_exists($enumClass = Config::get('response.enum'))) {
             $message = $enumClass::fromValue($originalCode)->description;
         }
 
-        return $this->formatDataFields([
+        if ($errors)
+        {
+            $data = array_merge_recursive($data ?: [], $errors);
+        }
+
+        return array_merge([
             'status' => $status,
             'code' => $originalCode,
             'message' => $message,
-            'data' => $data ?: (object) $data,
-            'error' => $errors ?: (object) [],
-        ], Config::get('response.format.fields', []));
+            'data' => $data,
+        ],$additional?: []);
     }
 
     /**
@@ -317,9 +284,7 @@ trait JsonResponseTrait
 
         $paginationInformation = $this->formatPaginatedData($paginated);
 
-        $data = array_merge_recursive(['data' => $paginated['data']], $paginationInformation);
-
-        return $this->response($this->formatData($data, $message, $code), $code, $headers, $option);
+        return $this->response($this->formatData($paginated['data'], $message, $code, null, $paginationInformation), $code, $headers, $option);
     }
 
     /**
@@ -359,16 +324,15 @@ trait JsonResponseTrait
      */
     protected function formatResourceCollectionResponse($resource, string $message = '', int $code = 200, array $headers = [], int $option = 0)
     {
-        $data = array_merge_recursive(['data' => $resource->resolve(request())], $resource->with(request()), $resource->additional);
+        $additional = array_merge_recursive($resource->with(request()), $resource->additional);
         if ($resource->resource instanceof AbstractPaginator) {
             $paginated = $resource->resource->toArray();
             $paginationInformation = $this->formatPaginatedData($paginated);
-
-            $data = array_merge_recursive($data, $paginationInformation);
+            $additional = array_merge_recursive($additional, $paginationInformation);
         }
 
         return tap(
-            $this->response($this->formatData($data, $message, $code), $code, $headers, $option),
+            $this->response($this->formatData($resource->resolve(request()), $message, $code, null, $additional), $code, $headers, $option),
             function ($response) use ($resource) {
                 $response->original = $resource->resource->map(
                     function ($item) {

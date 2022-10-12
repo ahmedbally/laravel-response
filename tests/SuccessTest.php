@@ -30,12 +30,12 @@ class SuccessTest extends TestCase
         $this->assertEquals(200, $response->status());
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => ResponseCodeEnum::fromValue(200)->description,
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
+
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
     }
 
@@ -47,12 +47,12 @@ class SuccessTest extends TestCase
         $this->assertEquals(201, $response->status());
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 201,
             'message' => ResponseCodeEnum::fromValue(201)->description,
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
+
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
     }
 
@@ -64,12 +64,12 @@ class SuccessTest extends TestCase
         $this->assertEquals(202, $response->status());
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 202,
             'message' => ResponseCodeEnum::fromValue(202)->description,
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
+
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
     }
 
@@ -81,11 +81,10 @@ class SuccessTest extends TestCase
         $this->assertEquals(204, $response->status());
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 204,
             'message' => ResponseCodeEnum::fromValue(204)->description,
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
 
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -103,12 +102,12 @@ class SuccessTest extends TestCase
         $this->assertEquals(200, $response->status());
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => ResponseCodeEnum::fromValue(200)->description,
             'data' => $data,
-            'error' => (object) [],
         ]);
+
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
     }
 
@@ -120,14 +119,13 @@ class SuccessTest extends TestCase
 
         $this->assertEquals(200, $response->status());
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => ResponseCodeEnum::fromValue(200)->description,
             'data' => [
                 'nickname' => $user->name,
                 'email' => $user->email,
             ],
-            'error' => (object) [],
         ]);
 
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -148,12 +146,12 @@ class SuccessTest extends TestCase
             ];
         })->all();
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => ResponseCodeEnum::fromValue(200)->description,
-            'data' => ['data' => $data],
-            'error' => (object) [],
+            'data' => $data,
         ]);
+
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
     }
 
@@ -191,11 +189,11 @@ class SuccessTest extends TestCase
             ],
         ];
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => ResponseCodeEnum::fromValue(200)->description,
-            'data' => $data,
-            'error' => (object) [],
+            'data' => $data['data'],
+            'meta' => $data['meta']
         ]);
 
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -204,14 +202,13 @@ class SuccessTest extends TestCase
     public function testSuccessWithMessage()
     {
         // 方式九：返回指定的 Message
-        $response = Response::success([], '成功');
+        $response = Response::success(null, '成功');
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => 200,
             'message' => '成功',
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
 
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -220,14 +217,13 @@ class SuccessTest extends TestCase
     public function testSuccessWithCustomMessageAndCode()
     {
         // 方式十：根据预定义的「业务码」和「对应的描述信息」返回
-        $response = Response::success([], '', ResponseCodeEnum::SERVICE_LOGIN_SUCCESS);
+        $response = Response::success(null, '', ResponseCodeEnum::SERVICE_LOGIN_SUCCESS);
 
         $expectedJson = json_encode([
-            'status' => 'success',
+            'status' => true,
             'code' => ResponseCodeEnum::SERVICE_LOGIN_SUCCESS, // 返回自定义的业务码
             'message' => ResponseCodeEnum::fromValue(ResponseCodeEnum::SERVICE_LOGIN_SUCCESS)->description, // 根据业务码取多语言的业务描述
-            'data' => (object) [],
-            'error' => (object) [],
+            'data' => null,
         ]);
 
         $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());

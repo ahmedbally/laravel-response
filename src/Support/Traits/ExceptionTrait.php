@@ -80,9 +80,9 @@ trait ExceptionTrait
     protected function invalidJson($request, ValidationException $exception)
     {
         return Response::fail(
-            $exception->validator->errors()->first(),
+            $exception->getMessage(),
             Arr::get(Config::get('response.exception'), ValidationException::class.'.code', 422),
-            $exception->errors()
+            ['fields' => $exception->errors()]
         );
     }
 
