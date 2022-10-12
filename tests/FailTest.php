@@ -27,8 +27,6 @@ class FailTest extends TestCase
     public function testFail()
     {
         try {
-            // 方式一：Controller 中直接返回失败，这里本质上是通过 JsonResponse 是抛出了一个 HttpResponseException，需要捕获异常后才能拿到真实响应
-            // 不需要在前面加 return
             Response::fail();
         } catch (HttpResponseException $e) {
             $response = $e->getResponse();
@@ -39,8 +37,6 @@ class FailTest extends TestCase
                 'status' => false,
                 'code' => 500,
                 'message' => ResponseCodeEnum::fromValue(500)->description,
-                // 这里应该是与 ResponseCodeEnum 中 500 状态码对应的描述，如果没有定义则取 Symfony\Component\HttpFoundation\Response
-                // 中标准的定义
                 'data' => null,
             ]);
 
@@ -51,8 +47,7 @@ class FailTest extends TestCase
     public function testFailWithMessage()
     {
         try {
-            // 方式二：Controller 中返回指定的 Message
-            Response::fail('操作失败');
+            Response::fail('Server Error');
         } catch (HttpResponseException $e) {
             $response = $e->getResponse();
 
@@ -61,7 +56,7 @@ class FailTest extends TestCase
             $expectedJson = json_encode([
                 'status' => false,
                 'code' => 500,
-                'message' => '操作失败',
+                'message' => 'Server Error',
                 'data' => null,
             ]);
             $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -71,7 +66,6 @@ class FailTest extends TestCase
     public function testFailWithCustomCodeAndMessage()
     {
         try {
-            // 方式三：Controller 中返回预先定义的业务错误码和错误描述
             Response::fail('', ResponseCodeEnum::SERVICE_LOGIN_ERROR);
         } catch (HttpResponseException $e) {
             $response = $e->getResponse();
@@ -80,8 +74,8 @@ class FailTest extends TestCase
 
             $expectedJson = json_encode([
                 'status' => false,
-                'code' => ResponseCodeEnum::SERVICE_LOGIN_ERROR, // 预期返回指定的业务错误码
-                'message' => ResponseCodeEnum::fromValue(ResponseCodeEnum::SERVICE_LOGIN_ERROR)->description, // 预期根据业务码取相应的错误描述
+                'code' => ResponseCodeEnum::SERVICE_LOGIN_ERROR,
+                'message' => ResponseCodeEnum::fromValue(ResponseCodeEnum::SERVICE_LOGIN_ERROR)->description,
                 'data' => null,
             ]);
             $this->assertJsonStringEqualsJsonString($expectedJson, $response->getContent());
@@ -91,7 +85,6 @@ class FailTest extends TestCase
     public function testFailOutController()
     {
         try {
-            // 方式四：Controller 中默认引入了 ResponseTrait；在没有引入 ResponseTrait 的地方可以直接使用 abort 来抛出 HttpException 异常然后返回错误信息
             abort(ResponseCodeEnum::SYSTEM_ERROR);
         } catch (HttpException $httpException) {
             $response = Response::fail(

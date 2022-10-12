@@ -24,8 +24,7 @@ class SuccessTest extends TestCase
 
     public function testSuccess()
     {
-        // 方式一：直接返回响应成功
-        $response = Response::success(); // 注意：这里必须使用 this->response() 函数方式调用，因为 MakesHttpRequests 中有 response 属性
+        $response = Response::success();
 
         $this->assertEquals(200, $response->status());
 
@@ -41,7 +40,6 @@ class SuccessTest extends TestCase
 
     public function testCreated()
     {
-        // 方式二：返回创建成功
         $response = Response::created();
 
         $this->assertEquals(201, $response->status());
@@ -58,7 +56,6 @@ class SuccessTest extends TestCase
 
     public function testAccepted()
     {
-        // 方式三：返回接收成功
         $response = Response::accepted();
 
         $this->assertEquals(202, $response->status());
@@ -75,7 +72,6 @@ class SuccessTest extends TestCase
 
     public function testNoContent()
     {
-        // 方式四：返回空内容；创建成功或删除成功等场景
         $response = Response::noContent();
 
         $this->assertEquals(204, $response->status());
@@ -92,7 +88,6 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithArrayData()
     {
-        // 方式五：返回普通的数组
         $data = [
             'name' => 'Jiannei',
             'email' => 'longjian.huang@foxmail.com',
@@ -113,7 +108,6 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithResourceData()
     {
-        // 方式六：返回 Api resource
         $user = User::factory()->make();
         $response = Response::success(new UserResource($user));
 
@@ -133,7 +127,6 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithCollectionData()
     {
-        // 方式七：返回 Api collection
         $users = User::factory()->count(10)->make();
         $response = Response::success(new UserCollection($users));
 
@@ -157,7 +150,6 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithPaginatedData()
     {
-        // 方式八：返回分页的 Api collection
         User::factory()->count(20)->create();
         $users = User::paginate();
 
@@ -201,13 +193,12 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithMessage()
     {
-        // 方式九：返回指定的 Message
-        $response = Response::success(null, '成功');
+        $response = Response::success(null, 'Success');
 
         $expectedJson = json_encode([
             'status' => true,
             'code' => 200,
-            'message' => '成功',
+            'message' => 'Success',
             'data' => null,
         ]);
 
@@ -216,13 +207,12 @@ class SuccessTest extends TestCase
 
     public function testSuccessWithCustomMessageAndCode()
     {
-        // 方式十：根据预定义的「业务码」和「对应的描述信息」返回
         $response = Response::success(null, '', ResponseCodeEnum::SERVICE_LOGIN_SUCCESS);
 
         $expectedJson = json_encode([
             'status' => true,
-            'code' => ResponseCodeEnum::SERVICE_LOGIN_SUCCESS, // 返回自定义的业务码
-            'message' => ResponseCodeEnum::fromValue(ResponseCodeEnum::SERVICE_LOGIN_SUCCESS)->description, // 根据业务码取多语言的业务描述
+            'code' => ResponseCodeEnum::SERVICE_LOGIN_SUCCESS,
+            'message' => ResponseCodeEnum::fromValue(ResponseCodeEnum::SERVICE_LOGIN_SUCCESS)->description,
             'data' => null,
         ]);
 

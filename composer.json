@@ -1,11 +1,11 @@
 {
-    "name": "jiannei/laravel-response",
+    "name": "ahmedbally/laravel-response",
     "description": "Laravel api response data format.",
     "license": "MIT",
     "authors": [
         {
-            "name": "jiannei",
-            "email": "longjian.huang@foxmail.com"
+            "name": "ahmedbally",
+            "email": "ahmedbaly87@gmail.com"
         }
     ],
     "require": {
